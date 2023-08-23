@@ -1,34 +1,75 @@
-#!/bin/sh
+#!/usr/bin/env bash
+# bin/compile <build-dir> <cache-dir> <env-dir>
 
-echo "-----> Install ffmpeg"
+header() {
+  echo "" || true
+  echo "-----> $*" || true
+}
 
-# let's define some vars
-BUILD_DIR=$1
+export_env_dir() {
+  env_dir=$1
+  acceptlist_regex=${2:-''}
+  denylist_regex=${3:-'^(PATH|GIT_DIR|CPATH|CPPATH|LD_PRELOAD|LIBRARY_PATH)$'}
+  if [ -d "$env_dir" ]; then
+    for e in $(ls $env_dir); do
+      echo "$e" | grep -E "$acceptlist_regex" | grep -qvE "$denylist_regex" &&
+      export "$e=$(cat $env_dir/$e)"
+      :
+    done
+  fi
+}
 
-# very reliable developer
-DOWNLOAD_URL="https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-amd64-static.tar.xz"
-echo "       DOWNLOAD_URL = ${DOWNLOAD_URL}"
+output() {
+  while IFS= read -r LINE; do
+    # do not indent headers that are being piped through the output
+    if [[ "$LINE" =~ ^-----\>.* ]]; then
+      echo "$LINE" || true
+    else
+      echo "       $LINE" || true
+    fi
+  done
+}
 
-# Navigate to the build directory
-cd $BUILD_DIR || { echo "Error navigating to BUILD_DIR"; exit 1; }
+header "Installing ffmpeg"
 
-# Create necessary directories
-mkdir -p vendor/ffmpeg
+BUILD_DIR=${1:-}
+ENV_DIR=${3:-}
+VENDOR_DIR="vendor"
+FFMPEG_ARCHIVE_NAME="ffmpeg.tar.xz"
 
+export_env_dir $ENV_DIR
 
-# Download ffmpeg.zip
-echo "       Downloading ffmpeg..."
-curl -L --silent -o ffmpeg.zip $DOWNLOAD_URL 
+cd $BUILD_DIR
+mkdir -p $VENDOR_DIR
+cd $VENDOR_DIR
+mkdir -p ffmpeg
+cd ffmpeg
 
-# # Unzip ffmpeg
-# echo "       Unzipping ffmpeg..."
-# unzip -q ffmpeg.zip -d vendor/ffmpeg/ || { echo "Error unzipping ffmpeg"; exit 1; }
+if [[ -z $FFMPEG_DOWNLOAD_URL ]]; then
+  echo "Variable FFMPEG_DOWNLOAD_URL isn't set, using default value" | output
+  FFMPEG_DOWNLOAD_URL="https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-amd64-static.tar.xz"
+fi
 
-# Optionally remove the downloaded zip file to clean up space
-rm ffmpeg.zip
+echo "Downloading $FFMPEG_DOWNLOAD_URL" | output
 
-echo "       Configuring PATH..."
-PROFILE_PATH="${BUILD_DIR}/.profile.d/ffmpeg.sh"
-mkdir -p "${BUILD_DIR}/.profile.d/"  # Ensure the directory exists
-echo 'export PATH="/app/vendor/ffmpeg:$PATH"' > $PROFILE_PATH
+code=$(curl "$FFMPEG_DOWNLOAD_URL" -L --silent --fail --retry 5 --retry-max-time 15 -o ./$FFMPEG_ARCHIVE_NAME --write-out "%{http_code}")
 
+if [ "$code" != "200" ]; then
+  echo "Unable to download ffmpeg: $code" | output && exit 1
+fi
+
+echo "Unpacking the archive" | output
+
+tar xJf "./$FFMPEG_ARCHIVE_NAME" --strip-components=1
+
+if [ "$?" != "0" ]; then
+  echo "Failed to unpack" | output && exit 1
+fi
+
+rm $FFMPEG_ARCHIVE_NAME
+
+PROFILE_PATH="$BUILD_DIR/.profile.d/ffmpeg.sh"
+mkdir -p $(dirname $PROFILE_PATH)
+echo 'export PATH="$PATH:${HOME}/vendor/ffmpeg"' >> $PROFILE_PATH
+
+echo "Installation successful" | output
