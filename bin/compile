@@ -15,9 +15,17 @@ cd $BUILD_DIR || { echo "Error navigating to BUILD_DIR"; exit 1; }
 # Create necessary directories
 mkdir -p vendor/ffmpeg
 
-# Download and extract ffmpeg
-echo "       Downloading and extracting ffmpeg..."
-curl -L --silent $DOWNLOAD_URL | unzip -d vendor/ffmpeg/ || { echo "Error downloading or unzipping ffmpeg"; exit 1; }
+
+# Download ffmpeg.zip
+echo "       Downloading ffmpeg..."
+curl -L --silent -o ffmpeg.zip $DOWNLOAD_URL 
+
+# Unzip ffmpeg
+echo "       Unzipping ffmpeg..."
+unzip -q ffmpeg.zip -d vendor/ffmpeg/ || { echo "Error unzipping ffmpeg"; exit 1; }
+
+# Optionally remove the downloaded zip file to clean up space
+rm ffmpeg.zip
 
 echo "       Configuring PATH..."
 PROFILE_PATH="${BUILD_DIR}/.profile.d/ffmpeg.sh"
