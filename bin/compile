@@ -29,4 +29,6 @@ rm ffmpeg.zip
 
 echo "       Configuring PATH..."
 PROFILE_PATH="${BUILD_DIR}/.profile.d/ffmpeg.sh"
+mkdir -p "${BUILD_DIR}/.profile.d/"  # Ensure the directory exists
 echo 'export PATH="/app/vendor/ffmpeg:$PATH"' > $PROFILE_PATH
+
