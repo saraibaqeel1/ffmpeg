@@ -6,7 +6,7 @@ echo "-----> Install ffmpeg"
 BUILD_DIR=$1
 
 # very reliable developer
-DOWNLOAD_URL="https://phpstack-896782-3112621.cloudwaysapps.com/ffmpeg-arm64.tar.xz"
+DOWNLOAD_URL="https://phpstack-896782-3112621.cloudwaysapps.com/ffmpeg-arm64.zip"
 echo "       DOWNLOAD_URL = ${DOWNLOAD_URL}"
 
 # Navigate to the build directory
@@ -17,7 +17,7 @@ mkdir -p vendor/ffmpeg
 
 # Download and extract ffmpeg
 echo "       Downloading and extracting ffmpeg..."
-curl -L --silent  $DOWNLOAD_URL | tar -Jx --strip-components=1 -C vendor/ffmpeg/ || { echo "Error downloading or extracting ffmpeg"; exit 1; }
+curl -L --silent $DOWNLOAD_URL | unzip -d vendor/ffmpeg/ || { echo "Error downloading or unzipping ffmpeg"; exit 1; }
 
 echo "       Configuring PATH..."
 PROFILE_PATH="${BUILD_DIR}/.profile.d/ffmpeg.sh"
