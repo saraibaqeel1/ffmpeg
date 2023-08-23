@@ -6,7 +6,7 @@ echo "-----> Install ffmpeg"
 BUILD_DIR=$1
 
 # very reliable developer
-DOWNLOAD_URL="https://johnvansickle.com/ffmpeg/builds/ffmpeg-git-amd64-static.tar.xz"
+DOWNLOAD_URL="https://phpstack-896782-3112621.cloudwaysapps.com/ffmpeg-amd64.zip"
 echo "       DOWNLOAD_URL = ${DOWNLOAD_URL}"
 
 # Navigate to the build directory
